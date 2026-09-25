@@ -128,11 +128,8 @@ CHIP Xor {
 ```
 Nand(A, B) = NOT(A AND B)
 
-## Multiplexer
+### Mux(Multiplexer)
 
-### Mux
-
-三個輸入：
 
 a：資料 A
 b：資料 B
@@ -160,4 +157,22 @@ CHIP Mux {
 }
 ```
 
-### 
+### DMux(Demultiplexer)
+
+我有一個輸入，幫我決定要送到哪一個輸出
+
+sel = 0 → a = in
+sel = 1 → b = in
+
+```
+CHIP DMux {
+    IN in, sel;
+    OUT a, b;
+
+    PARTS:
+    Not(in=sel , out=selNot );
+    And(a=in, b=selNot, out=a);
+    And(a=in, b=sel, out=b);
+
+}
+```
