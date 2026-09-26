@@ -392,3 +392,184 @@ CHIP Mux8Way16 {
     Mux16(a=out1 , b=out2 , sel=sel[2] , out=out );
 }
 ```
+### DMux4Way
+
+```
+CHIP DMux4Way {
+    IN in, sel[2];
+    OUT a, b, c, d;
+
+    PARTS:
+    DMux(in=in , sel=sel[1] , a=ab , b=cd );
+    DMux(in=ab , sel=sel[0] , a=a , b=b );
+    DMux(in=cd , sel=sel[0] , a=c , b=d );
+
+}
+```
+
+### DMux8Way
+```
+CHIP DMux8Way {
+    IN in, sel[3];
+    OUT a, b, c, d, e, f, g, h;
+
+    PARTS:
+    DMux(in=in , sel=sel[2] , a=abcd , b=efgh );
+    DMux(in=abcd , sel=sel[1] , a=ab , b=cd );
+    DMux(in=efgh , sel=sel[1] , a=ef , b=gh );
+    DMux(in=ab , sel=sel[0] , a=a , b=b );
+    DMux(in=cd , sel=sel[0] , a=c , b=d );
+    DMux(in=ef , sel=sel[0] , a=e , b=f );
+    DMux(in=gh , sel=sel[0] , a=g , b=h );
+
+}
+```
+
+## Project 2
+
+### HalfAdder
+
+```
+CHIP HalfAdder {
+    IN a, b;    // 1-bit inputs
+    OUT sum,    // Right bit of a + b 
+        carry;  // Left bit of a + b
+
+    PARTS:
+    Xor(a=a , b=b , out=sum );
+    And(a=a , b=b , out=carry );
+}
+```
+### FullAdder
+```
+CHIP FullAdder {
+    IN a, b, c;  // 1-bit inputs
+    OUT sum,     // Right bit of a + b + c
+        carry;   // Left bit of a + b + c
+
+    PARTS:
+    HalfAdder(a=a , b=b , sum=sum1 , carry=carry1 );
+    HalfAdder(a=sum1 , b=c , sum=sum , carry=carry2 );
+    Or(a=carry1 , b=carry2 , out=carry );
+}
+```
+
+### Add16
+```
+CHIP Add16 {
+    IN a[16], b[16];
+    OUT out[16];
+
+    PARTS:
+    FullAdder(a=a[0] , b=b[0] , c=false , sum=out[0] , carry=carry0 );
+    FullAdder(a=a[1] , b=b[1] , c=carry0 , sum=out[1] , carry=carry1 );
+    FullAdder(a=a[2] , b=b[2] , c=carry1 , sum=out[2] , carry=carry2 );
+    FullAdder(a=a[3] , b=b[3] , c=carry2 , sum=out[3] , carry=carry3 );
+    FullAdder(a=a[4] , b=b[4] , c=carry3 , sum=out[4] , carry=carry4 );
+    FullAdder(a=a[5] , b=b[5] , c=carry4 , sum=out[5] , carry=carry5 );
+    FullAdder(a=a[6] , b=b[6] , c=carry5 , sum=out[6] , carry=carry6 );
+    FullAdder(a=a[7] , b=b[7] , c=carry6 , sum=out[7] , carry=carry7 );
+    FullAdder(a=a[8] , b=b[8] , c=carry7 , sum=out[8] , carry=carry8 );
+    FullAdder(a=a[9] , b=b[9] , c=carry8 , sum=out[9] , carry=carry9 );
+    FullAdder(a=a[10] , b=b[10] , c=carry9 , sum=out[10] , carry=carry10 );
+    FullAdder(a=a[11] , b=b[11] , c=carry10 , sum=out[11] , carry=carry11 );
+    FullAdder(a=a[12] , b=b[12] , c=carry11 , sum=out[12] , carry=carry12 );
+    FullAdder(a=a[13] , b=b[13] , c=carry12 , sum=out[13] , carry=carry13 );
+    FullAdder(a=a[14] , b=b[14] , c=carry13 , sum=out[14] , carry=carry14 );
+    FullAdder(a=a[15] , b=b[15] , c=carry14 , sum=out[15] , carry=carry15 );
+}
+```
+### Inc16
+```
+CHIP Inc16 {
+    IN in[16];
+    OUT out[16];
+
+    PARTS:
+    Add16(a=in, b[0]=true, b[1..15]=false, out=out);
+}
+```
+
+### ALU
+
+out：計算結果
+zr：結果是否為 0
+ng：結果為負
+
+為什麼 ALU 要多給 zr 和 ng？
+因為 CPU 很常需要做結果是不是 0、結果是不是負數。
+例如 Assembly 裡面想做條件跳轉：如果結果 == 0：跳；如果結果 < 0：跳。
+
+out[15]？
+怎麼表示負數？
+這裡使用二補數，16 個 bit 一共有 2^16 = 65536 種組合。
+如果全部拿來表示正整數就是 0 ~ 65535，但這裡選擇把其中一半拿來表示負數：-32768 ~ 32767。
+最高位 bit 15 是 1 時就是負數。
+
+假設我們要表示 -1
+
+先拿 1：0000 0000 0000 0001
+
+全部反轉：1111 1111 1111 1110
+
+再加 1：1111 1111 1111 1111
+
+1111 1111 1111 1111 = -1
+
+```
+CHIP ALU {
+    IN  
+        x[16], y[16],  // 16-bit inputs        
+        zx, // zero the x input?
+        nx, // negate the x input?
+        zy, // zero the y input?
+        ny, // negate the y input?
+        f,  // compute (out = x + y) or (out = x & y)?
+        no; // negate the out output?
+    OUT 
+        out[16], // 16-bit output
+        zr,      // if (out == 0) equals 1, else 0
+        ng;      // if (out < 0)  equals 1, else 0
+
+    PARTS:
+    // zero the x input
+    Mux16(a=x , b=false , sel=zx , out=outZx );
+
+    // negate the x input
+    Not16(in=outZx, out=notX);
+    Mux16(a=outZx , b=notX , sel=nx , out=outNx );
+
+    // zero the y input
+    Mux16(a=y , b=false , sel=zy , out=outZy );
+
+    // negate the y input
+    Not16(in=outZy, out=notY);
+    Mux16(a=outZy , b=notY , sel=ny , out=outNy );
+
+    // compute (out = x + y) or (out = x & y)
+    Add16(a=outNx , b=outNy , out=xyAdd );
+    And16(a=outNx , b=outNy , out=xyAnd );
+    Mux16(a=xyAnd , b=xyAdd , sel=f , out=outf );
+
+    // negate the out output
+    // ng
+    Not16(in=outf , out=outfN );
+    Mux16(
+        a=outf,
+        b=outfN,
+        sel=no,
+        out=out,
+        out[0..7]=outL,
+        out[8..15]=outH,
+        out[15]=ng
+    );
+
+    //zr
+    Or8Way(in=outL, out=lOne);
+    Or8Way(in=outH, out=hOne);
+
+    Or(a=lOne, b=hOne, out=hasOne);
+
+    Not(in=hasOne, out=zr);
+}
+```
