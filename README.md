@@ -1,7 +1,12 @@
 # nand2tetris 學習筆記
 
+## Project 1
+Project 1 用 Primitive Gate （這裡是 NAND） 組出各種邏輯閘。
+
 NAND 是 functionally complete（功能完備）的邏輯閘。
 只要有 NAND，就可以做出所有基本邏輯閘。
+
+--
 
 Online IDE:
 https://nand2tetris.github.io/web-ide/chip
@@ -425,9 +430,47 @@ CHIP DMux8Way {
 }
 ```
 
+--
+
+額外筆記：
+
+NOR 也是功能完備邏輯閘，所以我好奇為什麼 nand2tetris 不是 nor2tetris XDD
+
+下面是查到的資料：
+
+CMOS 電路由 NMOS（利用電子導電）和 PMOS（利用電洞導電）組成。
+
+NMOS 的導通速度比 PMOS 快，因為電子的遷移率大約是電洞的 2 到 3 倍。
+
+為了讓電路的上升時間（Rise time）和下降時間（Fall time）對稱，PMOS 的尺寸通常必須設計得比 NMOS 大 2 到 3 倍。這直接影響了兩者的電路佈局：
+
+NAND 閘：
+* PMOS 銜接方式：並聯（Parallel）
+* NMOS 銜接方式，串聯（Series）
+* 尺寸設計需求：串聯的 NMOS 速度雖變慢，但因為電子本來就快，尺寸不需放大太多。
+
+NOR 閘：
+* PMOS 銜接方式：串聯（Series）
+* NMOS 銜接方式，並聯（Parallel）
+* 尺寸設計需求：串聯的 PMOS 速度更慢，為了彌補速度，必須把 PMOS 的尺寸放得非常大。
+
+NOR 閘因為有巨大的 PMOS 晶體，會產生很大的輸入電容，這會導致訊號傳播延遲變大。在相同的驅動能力下，NAND 閘的切換速度明顯快於 NOR 閘。
+
+總之 NOR 閘需要做得比較大，代表它會比較慢，而且成本比較高。
+
+    
 ## Project 2
+用 Project 1 的邏輯閘和電路組出加法器與 ALU，讓 0 1 開始具備計算的能力。
 
 ### HalfAdder
+
+最小的加法器，輸入 a b ，輸出 sum 和 carry。
+
+例如：  1 + 1 = 10
+
+sum = 0 
+
+carry = 1
 
 ```
 CHIP HalfAdder {
@@ -440,7 +483,12 @@ CHIP HalfAdder {
     And(a=a , b=b , out=carry );
 }
 ```
+
 ### FullAdder
+多位數加法還需要處理上一位的進位，所以 FullAdder 有三個輸入：a b c
+
+c 為 carry-in。
+
 ```
 CHIP FullAdder {
     IN a, b, c;  // 1-bit inputs
@@ -455,6 +503,8 @@ CHIP FullAdder {
 ```
 
 ### Add16
+16-bit 加法器。
+
 ```
 CHIP Add16 {
     IN a[16], b[16];
@@ -480,6 +530,8 @@ CHIP Add16 {
 }
 ```
 ### Inc16
+16-bit 數字 + 1。
+
 ```
 CHIP Inc16 {
     IN in[16];
@@ -492,19 +544,32 @@ CHIP Inc16 {
 
 ### ALU
 
-out：計算結果
-zr：結果是否為 0
-ng：結果為負
+Arithmetic Logic Unit。
+ALU 其實就是一連串 Mux，不斷選擇要用哪一個輸入。
+
+--
+
+* out：計算結果
+* zr：結果是否為 0
+* ng：結果為負
 
 為什麼 ALU 要多給 zr 和 ng？
+
 因為 CPU 很常需要做結果是不是 0、結果是不是負數。
+
 例如 Assembly 裡面想做條件跳轉：如果結果 == 0：跳；如果結果 < 0：跳。
 
-out[15]？
-怎麼表示負數？
+--
+
+out[15]？怎麼表示負數？
+
 這裡使用二補數，16 個 bit 一共有 2^16 = 65536 種組合。
+
 如果全部拿來表示正整數就是 0 ~ 65535，但這裡選擇把其中一半拿來表示負數：-32768 ~ 32767。
+
 最高位 bit 15 是 1 時就是負數。
+
+--
 
 假設我們要表示 -1
 
@@ -515,6 +580,7 @@ out[15]？
 再加 1：1111 1111 1111 1111
 
 1111 1111 1111 1111 = -1
+
 
 ```
 CHIP ALU {
