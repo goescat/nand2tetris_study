@@ -639,3 +639,65 @@ CHIP ALU {
     Not(in=hasOne, out=zr);
 }
 ```
+## Project 3
+
+DFF（D Flip-Flop）：在 clock 到來的時候，把 in 記住，然後從 out 輸出。
+
+### Bit
+```
+CHIP Bit {
+    IN in, load;
+    OUT out;
+
+    PARTS:
+    Mux(a=t, b=in, sel=load, out=ot);
+    DFF(in=ot , out=t, out=out );
+    
+}
+```
+
+### Register
+```
+CHIP Register {
+    IN in[16], load;
+    OUT out[16];
+
+    PARTS:
+    Bit(in=in[0] , load=load , out=out[0] );
+    Bit(in=in[1] , load=load , out=out[1] );
+    Bit(in=in[2] , load=load , out=out[2] );
+    Bit(in=in[3] , load=load , out=out[3] );
+    Bit(in=in[4] , load=load , out=out[4] );
+    Bit(in=in[5] , load=load , out=out[5] );
+    Bit(in=in[6] , load=load , out=out[6] );
+    Bit(in=in[7] , load=load , out=out[7] );
+    Bit(in=in[8] , load=load , out=out[8] );
+    Bit(in=in[9] , load=load , out=out[9] );
+    Bit(in=in[10] , load=load , out=out[10] );
+    Bit(in=in[11] , load=load , out=out[11] );
+    Bit(in=in[12] , load=load , out=out[12] );
+    Bit(in=in[13] , load=load , out=out[13] );
+    Bit(in=in[14] , load=load , out=out[14] );
+    Bit(in=in[15] , load=load , out=out[15] );
+}
+```
+
+### RAM8
+```
+CHIP RAM8 {
+    IN in[16], load, address[3];
+    OUT out[16];
+
+    PARTS:
+    DMux8Way(in=load , sel=address , a=a , b=b , c=c , d=d , e=e , f=f , g=g , h=h );
+    Register(in=in , load=a , out=r0 );
+    Register(in=in , load=b , out=r1 );
+    Register(in=in , load=c , out=r2 );
+    Register(in=in , load=d , out=r3 );
+    Register(in=in , load=e , out=r4 );
+    Register(in=in , load=f , out=r5 );
+    Register(in=in , load=g , out=r6 );
+    Register(in=in , load=h , out=r7 );
+    Mux8Way16(a=r0 , b=r1 , c=r2 , d=r3 , e=r4 , f=r5 , g=r6 , h=r7 , sel=address , out=out );
+}
+```
