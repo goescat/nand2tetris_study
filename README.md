@@ -641,9 +641,14 @@ CHIP ALU {
 ```
 ## Project 3
 
+Sequential Logic。
+
 DFF（D Flip-Flop）：在 clock 到來的時候，把 in 記住，然後從 out 輸出。
 
 ### Bit
+最基本的記憶單位，可以記住 0 或 1。
+核心元件是 DFF。
+
 ```
 CHIP Bit {
     IN in, load;
@@ -657,6 +662,8 @@ CHIP Bit {
 ```
 
 ### Register
+把 16 個 Bit 放在一起。
+
 ```
 CHIP Register {
     IN in[16], load;
@@ -683,6 +690,11 @@ CHIP Register {
 ```
 
 ### RAM8
+
+8 × Register。
+
+剛剛 Register 本身只有一個位置，不需要問 Register 裡面的哪一格，但 RAM 有很多格，所以需要記憶體位址（address）。
+
 ```
 CHIP RAM8 {
     IN in[16], load, address[3];
@@ -699,5 +711,157 @@ CHIP RAM8 {
     Register(in=in , load=g , out=r6 );
     Register(in=in , load=h , out=r7 );
     Mux8Way16(a=r0 , b=r1 , c=r2 , d=r3 , e=r4 , f=r5 , g=r6 , h=r7 , sel=address , out=out );
+}
+```
+
+### RAM64
+
+8 × RAM8。
+RAM64 有 64 個 16-bit 儲存位置。
+因為 8 × 8 = 64
+
+需要 2⁶ = 64
+
+所以 address[6]
+
+這時候 address 可以拆成：
+高 3 bits → 選 RAM8，低 3 bits → RAM8 裡面的 Register。
+
+```
+CHIP RAM64 {
+    IN in[16], load, address[6];
+    OUT out[16];
+
+    PARTS:
+    DMux8Way(in=load , sel=address[3..5] , a=a , b=b , c=c , d=d , e=e , f=f , g=g , h=h );
+    RAM8(in=in , load=a , address=address[0..2] , out=o0 );
+    RAM8(in=in , load=b , address=address[0..2] , out=o1 );
+    RAM8(in=in , load=c , address=address[0..2] , out=o2 );
+    RAM8(in=in , load=d , address=address[0..2] , out=o3 );
+    RAM8(in=in , load=e , address=address[0..2] , out=o4 );
+    RAM8(in=in , load=f , address=address[0..2] , out=o5 );
+    RAM8(in=in , load=g , address=address[0..2] , out=o6 );
+    RAM8(in=in , load=h , address=address[0..2] , out=o7 );
+
+    Mux8Way16(a=o0 , b=o1 , c=o2 , d=o3 , e=o4 , f=o5 , g=o6 , h=o7 , sel=address[3..5] , out=out );
+
+}
+```
+
+### RAM512
+
+8 × RAM64。
+
+2⁹ = 512
+
+address[9]
+
+高 3 bits → 選 RAM64，低 6 bits → RAM64 裡的位置。
+
+```
+CHIP RAM512 {
+    IN in[16], load, address[9];
+    OUT out[16];
+
+    PARTS:
+    DMux8Way(in=load , sel=address[6..8] , a=a , b=b , c=c , d=d , e=e , f=f , g=g , h=h );
+    RAM64(in=in , load=a , address=address[0..5] , out=o0 );
+    RAM64(in=in , load=b , address=address[0..5] , out=o1 );
+    RAM64(in=in , load=c , address=address[0..5] , out=o2 );
+    RAM64(in=in , load=d , address=address[0..5] , out=o3 );
+    RAM64(in=in , load=e , address=address[0..5] , out=o4 );
+    RAM64(in=in , load=f , address=address[0..5] , out=o5 );
+    RAM64(in=in , load=g , address=address[0..5] , out=o6 );
+    RAM64(in=in , load=h , address=address[0..5] , out=o7 );
+
+    Mux8Way16(a=o0 , b=o1 , c=o2 , d=o3 , e=o4 , f=o5 , g=o6 , h=o7 , sel=address[6..8] , out=out );
+
+}
+```
+
+### RAM4K
+8 × RAM512。
+
+8 × 512 = 4096
+
+2¹² = 4096
+
+高 3 bits → 選 RAM512，低 9 bits → RAM512 裡的位置。
+
+```
+CHIP RAM4K {
+    IN in[16], load, address[12];
+    OUT out[16];
+
+    PARTS:
+    DMux8Way(in=load , sel=address[9..11] , a=a , b=b , c=c , d=d , e=e , f=f , g=g , h=h );
+    
+    RAM512(in=in , load=a , address=address[0..8] , out=o0 );
+    RAM512(in=in , load=b , address=address[0..8] , out=o1 );
+    RAM512(in=in , load=c , address=address[0..8] , out=o2 );
+    RAM512(in=in , load=d , address=address[0..8] , out=o3 );
+    RAM512(in=in , load=e , address=address[0..8] , out=o4 );
+    RAM512(in=in , load=f , address=address[0..8] , out=o5 );
+    RAM512(in=in , load=g , address=address[0..8] , out=o6 );
+    RAM512(in=in , load=h , address=address[0..8] , out=o7 );
+
+    Mux8Way16(a=o0 , b=o1 , c=o2 , d=o3 , e=o4 , f=o5 , g=o6 , h=o7 , sel=address[9..11] , out=out );
+
+}
+```
+
+### RAM16K
+4 × RAM4K。
+4 × 4096
+= 16384
+= 16K
+
+2¹⁴ = 16384
+
+14-bit address
+
+高 2 bits → 選 RAM4K，低 12 bits → RAM4K 裡的位置。
+
+```
+CHIP RAM16K {
+    IN in[16], load, address[14];
+    OUT out[16];
+
+    PARTS:
+    DMux4Way(in=load , sel=address[12..13], a=a , b=b , c=c , d=d );
+    
+    RAM4K(in=in , load=a , address=address[0..11] , out=o0 );
+    RAM4K(in=in , load=b , address=address[0..11] , out=o1 );
+    RAM4K(in=in , load=c , address=address[0..11] , out=o2 );
+    RAM4K(in=in , load=d , address=address[0..11] , out=o3 );
+
+    Mux4Way16(a=o0 , b=o1 , c=o2 , d=o3 , sel=address[12..13] , out=out );
+
+}
+```
+
+### PC
+Program Counter，根據控制訊號更新的 16-bit Register。
+
+```
+CHIP PC {
+    IN in[16], reset, load, inc;
+    OUT out[16];
+    
+    PARTS:
+    
+    //out +1
+    Inc16(in=prev, out=incOut);
+
+    //if inc
+    Mux16(a=prev, b=incOut, sel=inc, out=incResult);
+
+    //if load in
+    Mux16(a=incResult, b=in, sel=load, out=loadResult);
+
+    //if reset
+    Mux16(a=loadResult, b=false, sel=reset, out=next);
+
+    Register(in=next, load=true, out=prev, out=out);
 }
 ```
