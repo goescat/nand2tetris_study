@@ -869,6 +869,8 @@ CHIP PC {
 ## Project 4
 
 Mult.asm 
+到底對不對啊？？好像是可以過但不確定XDDD 直接硬改書裡的1+...+100範例XDDD
+
 ```
 // R0 * R1 -> R2
 
