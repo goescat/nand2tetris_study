@@ -914,3 +914,21 @@ M=D
 @END
 0;JMP
 ```
+
+## Project 5
+
+### Memory
+```
+CHIP Memory {
+    IN in[16], load, address[15];
+    OUT out[16];
+
+    PARTS:
+    DMux4Way(in=load, sel=address[13..14], a=loadRAM, b=loadScreen, c=loadKeyboard, d=unused);
+    RAM16K(in=in, load=loadRAM, address=address[0..13], out=ramOut);
+    Screen(in=in, load=loadScreen, address=address[0..12], out=screenOut);
+    Keyboard(out=keyboardOut);
+    Mux4Way16(a=ramOut, b=screenOut, c=keyboardOut, d=false, sel=address[13..14], out=out);
+
+}
+```
